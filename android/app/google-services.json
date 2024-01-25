@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "867143174442",
+    "project_id": "flutter-proyects-bea4c",
+    "storage_bucket": "flutter-proyects-bea4c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:867143174442:android:55c9a630c21b754900f653",
+        "android_client_info": {
+          "package_name": "com.danielchavez.push_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDzCZD_A5RjnGXmiVblhgClKcbjMj8CJGA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
