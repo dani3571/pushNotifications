@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '867143174442',
     projectId: 'flutter-proyects-bea4c',
     storageBucket: 'flutter-proyects-bea4c.appspot.com',
-    iosBundleId: 'com.example.pushApp',
+    iosBundleId: 'com.danielchavez.push_app',
   );
 }

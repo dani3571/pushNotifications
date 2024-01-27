@@ -7,11 +7,9 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final notificationState = NotificationsBloc().state;
     return Scaffold(
       appBar: AppBar(
-        // title: context.select((NotificationsBloc bloc) =>Text('${bloc.state.status}' )),
-        title: Text('${notificationState.status}'),
+         title: context.select((NotificationsBloc bloc) =>Text('${bloc.state.status}' )),
         actions: [
           // TODO Solicitar permiso de notificaciones
           IconButton(
