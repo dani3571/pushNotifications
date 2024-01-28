@@ -1,25 +1,63 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 import '../../../firebase_options.dart';
 
 part 'notifications_event.dart';
 part 'notifications_state.dart';
 
+ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+    // If you're going to use other Firebase services in the background, such as Firestore,
+    // make sure you call `initializeApp` before using other Firebase services.
+    await Firebase.initializeApp();
+    print("Handling a background message: ${message.messageId}");
+  }
 class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
   NotificationsBloc() : super(const NotificationsState()) {
     //  on<NotificationsEvent>((event, emit) {});
-    on<NotificationsStatusChanged>((event, emit) {
-      emit(state.copyWith(
-        status: event.status,
-      ));
-    });
+    on<NotificationsStatusChanged>(_onChangeStatus);
+    // Verificar estado initial de las notificaciones
+    _initialStatusCheck();
+    // Listener para notificaciones en foreground
+    _onForegroundMessage();
+  }
+
+  void _onChangeStatus(
+      NotificationsStatusChanged event, Emitter<NotificationsState> emit) {
+    emit(state.copyWith(status: event.status));
+    _getFCMToken();
+  }
+
+  void _initialStatusCheck() async {
+    final settings = await messaging.getNotificationSettings();
+    add(NotificationsStatusChanged(settings.authorizationStatus));
+  }
+
+  // FCM -> Firebase cloud message
+  void _getFCMToken() async {
+    // * Token identificador unico del dispositivo el cual nos puede servir
+    // * para enviar una notificacion a un dispositivo especifico
+    if (state.status != AuthorizationStatus.authorized) return;
+    final token = await messaging.getToken();
+    print('token: $token');
+  }
+
+  void handleRemoteMessage(RemoteMessage message) {
+    print('Got a message whilst in the foreground!');
+    print('Message data: ${message.data}');
+    if (message.notification == null) return;
+
+    print('Message also contained a notification: ${message.notification}');
+  }
+
+  void _onForegroundMessage() {
+    // * Stream:
+    FirebaseMessaging.onMessage.listen(handleRemoteMessage);
+    
   }
 
   // Static permite hacer una llamada a la clase sin instanciarlo
@@ -36,7 +74,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       announcement: false,
       badge: true,
       carPlay: false,
-      criticalAlert: false,
+      criticalAlert: true,
       provisional: false,
       sound: true,
     );
@@ -50,7 +88,6 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       print('User declined or has not accepted permission');
     }
 
-    
     //  settings.authorizationStatus;
 
     add(NotificationsStatusChanged(settings.authorizationStatus));
