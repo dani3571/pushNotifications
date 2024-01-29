@@ -112,4 +112,11 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
     add(NotificationsStatusChanged(settings.authorizationStatus));
   }
+  // * Funcion para verificar si existe un pushMessage y si existe retornara el PushMessage
+  PushMessage? getMessageId(String pushMessageId){
+      final exist = state.notifications.any((element) => element.messageId == pushMessageId);
+      if(!exist) return null;
+      // * El firsWhere siempre retornara a fuerza la instancia 
+      return state.notifications.firstWhere((element) => element.messageId == pushMessageId);
+  }
 }
