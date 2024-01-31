@@ -13,7 +13,6 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
          title: context.select((NotificationsBloc bloc) =>Text('${bloc.state.status}' )),
         actions: [
-          // TODO Solicitar permiso de notificaciones
           IconButton(
             onPressed: () {
               context.read<NotificationsBloc>().requestPermision();
