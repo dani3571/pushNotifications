@@ -73,6 +73,8 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
   void _opPushMessageReceived(NotificationReceived event, Emitter<NotificationsState> emit) {
     emit(
+      // * Usamos el operador spread (...) para agregar la nueva notificacion al principio de la lista actual 
+      // * de las notificaciones
         state.copyWith(notifications: [event.message, ...state.notifications]));
   }
 
@@ -123,4 +125,10 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     return state.notifications
         .firstWhere((element) => element.messageId == pushMessageId);
   }
+  // ! FORMA 1 - DEPRECADA
+  // * Para enviar notificaciones desde un protocolo http debemos consultar la siguiente documentacion
+  // * https://firebase.google.com/docs/cloud-messaging/http-server-ref y ademas debemos habilitar el
+  // * API de Cloud Messaging (heredada)
+
+  // ! FORMA 2 - RECOMENDADA CON SERVIDORES BEARER TOKEN -> https://firebase.google.com/docs/cloud-messaging/send-message#rest_3 
 }
