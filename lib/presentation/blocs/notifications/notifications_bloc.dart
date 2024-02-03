@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:push_app/config/local_notifications/local_notifications.dart';
 import 'package:push_app/domain/entities/push_message.dart';
 import '../../../firebase_options.dart';
 part 'notifications_event.dart';
@@ -55,9 +56,9 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     print('Message also contained a notification: ${message.notification}');
 
     final notification = PushMessage(
-       // * Limpiamos el messageId dado que puede contener caracteres que afecten al funcionamiento de la aplicacion
-        messageId: message.messageId?.replaceAll(':', '').replaceAll('%', '') ??
-            '', 
+        // * Limpiamos el messageId dado que puede contener caracteres que afecten al funcionamiento de la aplicacion
+        messageId:
+            message.messageId?.replaceAll(':', '').replaceAll('%', '') ?? '',
         title: message.notification!.title ?? '',
         body: message.notification!.body ?? '',
         sentData: message.sentTime ?? DateTime.now(),
@@ -71,10 +72,11 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     add(NotificationReceived(notification));
   }
 
-  void _opPushMessageReceived(NotificationReceived event, Emitter<NotificationsState> emit) {
+  void _opPushMessageReceived(
+      NotificationReceived event, Emitter<NotificationsState> emit) {
     emit(
-      // * Usamos el operador spread (...) para agregar la nueva notificacion al principio de la lista actual 
-      // * de las notificaciones
+        // * Usamos el operador spread (...) para agregar la nueva notificacion al principio de la lista actual
+        // * de las notificaciones
         state.copyWith(notifications: [event.message, ...state.notifications]));
   }
 
@@ -92,6 +94,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
   // Sacado de la documentacion de flutterFire - Permissions
   void requestPermision() async {
+    // * Solicitar permiso a las push notifications
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
       announcement: false,
@@ -101,19 +104,11 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       provisional: false,
       sound: true,
     );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
-    } else if (settings.authorizationStatus ==
-        AuthorizationStatus.provisional) {
-      print('User granted provisional permission');
-    } else {
-      print('User declined or has not accepted permission');
-    }
-
-    //  settings.authorizationStatus;
-
     add(NotificationsStatusChanged(settings.authorizationStatus));
+
+    // * Solicitar permiso a las local notifications 
+    await requestPermissionLocalNotifications();
+
   }
 
   // * Funcion para verificar si existe un pushMessage y si existe retornara el PushMessage
@@ -130,5 +125,5 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   // * https://firebase.google.com/docs/cloud-messaging/http-server-ref y ademas debemos habilitar el
   // * API de Cloud Messaging (heredada)
 
-  // ! FORMA 2 - RECOMENDADA CON SERVIDORES BEARER TOKEN -> https://firebase.google.com/docs/cloud-messaging/send-message#rest_3 
+  // ! FORMA 2 - RECOMENDADA CON SERVIDORES BEARER TOKEN -> https://firebase.google.com/docs/cloud-messaging/send-message#rest_3
 }
