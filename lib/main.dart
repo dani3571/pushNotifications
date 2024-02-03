@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:push_app/config/local_notifications/local_notifications.dart';
 import 'package:push_app/config/router/app_router.dart';
 
 import 'package:push_app/config/theme/app_theme.dart';
@@ -10,6 +11,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await NotificationsBloc.initializeFirebaseNotifications();
+  await LocalNotifications
+      .initializeLocalNotifications(); // Inicializamos el local notifications
   runApp(
       // En cualquier momento de la aplicacion se recibira una notificacion push
       // entonces debemos reaccionar basado a esa notificacion, es por ello que
@@ -17,7 +20,10 @@ void main() async {
       // basicamente una instancia del bloc en el main (punto mas alto de la app)
       MultiBlocProvider(providers: [
     BlocProvider(
-      create: (context) => NotificationsBloc(),
+      create: (context) => NotificationsBloc(
+          requestLocalNotificationPermissions:
+              LocalNotifications.requestPermissionLocalNotifications,
+          showLocalNotification: LocalNotifications.showLocalNotification),
     )
   ], child: const MainApp()));
 }
@@ -48,21 +54,20 @@ class HandleNotificationInteractions extends StatefulWidget {
 
 class _HandleNotificationInteractionsState
     extends State<HandleNotificationInteractions> {
-
-
   Future<void> setupInteractedMessage() async {
-    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    RemoteMessage? initialMessage =
+        await FirebaseMessaging.instance.getInitialMessage();
 
-    if(initialMessage == null) return;
-  
+    if (initialMessage == null) return;
+
     handleMessage(initialMessage);
   }
 
   void handleMessage(RemoteMessage message) {
     context.read<NotificationsBloc>().handleRemoteMessage(message);
-    final messageId = message.messageId?.replaceAll(':', '').replaceAll('%', '');
-    appRouter.push(
-        '/push-details/$messageId');
+    final messageId =
+        message.messageId?.replaceAll(':', '').replaceAll('%', '');
+    appRouter.push('/push-details/$messageId');
   }
 
   @override

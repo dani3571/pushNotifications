@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:push_app/config/local_notifications/local_notifications.dart';
 import 'package:push_app/domain/entities/push_message.dart';
 import '../../../firebase_options.dart';
 part 'notifications_event.dart';
@@ -18,7 +17,21 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
-  NotificationsBloc() : super(const NotificationsState()) {
+  int pushNumberId = 0;
+
+  // * Variables de tipo funciones para poder asignarlas en el main
+  final Future<void> Function()? requestLocalNotificationPermissions;
+  final void Function({
+    required int id,
+    String? title,
+    String? body,
+    String? data,
+  })? showLocalNotification;
+
+  NotificationsBloc(
+      {required this.requestLocalNotificationPermissions,
+      required this.showLocalNotification})
+      : super(const NotificationsState()) {
     //  on<NotificationsEvent>((event, emit) {});
     on<NotificationsStatusChanged>(_onChangeStatus);
     on<NotificationReceived>(_opPushMessageReceived);
@@ -69,6 +82,24 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
     print(notification);
 
+    if (showLocalNotification != null) {
+      showLocalNotification!(
+          id: ++pushNumberId,
+          body: notification.body,
+          title: notification.title,
+          data: notification.messageId);
+    }
+
+    // ! No utilizo el codigo siguiente dado que tienen dependecias ocultas (solucion arriba)
+    // ! y esa no es una buena practica para solucionar esto creamos variables de tipo funciones
+    // ! para asignarlas en el main
+    /*
+    LocalNotifications.showLocalNotification(
+        id: ++pushNumberId,
+        body: notification.body,
+        title: notification.title,
+        data: notification.data.toString());  
+    */
     add(NotificationReceived(notification));
   }
 
@@ -106,9 +137,10 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     );
     add(NotificationsStatusChanged(settings.authorizationStatus));
 
-    // * Solicitar permiso a las local notifications 
-    await requestPermissionLocalNotifications();
-
+    // * Solicitar permiso a las local notifications
+    if (requestLocalNotificationPermissions != null) {
+      await requestLocalNotificationPermissions!();
+    }
   }
 
   // * Funcion para verificar si existe un pushMessage y si existe retornara el PushMessage
@@ -120,7 +152,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     return state.notifications
         .firstWhere((element) => element.messageId == pushMessageId);
   }
-  // ! FORMA 1 - DEPRECADA
+  // ! FORMA 1 - No recomendada
   // * Para enviar notificaciones desde un protocolo http debemos consultar la siguiente documentacion
   // * https://firebase.google.com/docs/cloud-messaging/http-server-ref y ademas debemos habilitar el
   // * API de Cloud Messaging (heredada)
